@@ -1,0 +1,18 @@
+{
+  "name": "call-keeper-android",
+  "version": "3.0.0",
+  "private": true,
+  "description": "Call Keeper card-game scoring app for Android",
+  "scripts": {
+    "android:add": "cap add android",
+    "android:sync": "cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/core": "^7.4.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.3",
+    "typescript": "^5.8.3"
+  }
+}

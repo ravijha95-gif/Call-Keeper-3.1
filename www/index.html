@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Call Keeper — Score App</title>
+<style>
+  :root{
+    --bg:#0e1014; --card:#171a21; --card2:#1e222b; --line:#2a2f3a;
+    --txt:#e7eaf0; --muted:#8b93a7; --acc:#5eead4; --acc2:#38bdf8;
+    --pos:#4ade80; --neg:#f87171; --gold:#fbbf24;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(1100px 560px at 50% -12%, #1b2230 0%, var(--bg) 62%);
+    color:var(--txt); min-height:100vh; padding-bottom:40px;
+    font-family:system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:720px;margin:0 auto;padding:18px 14px}
+  header.app{display:flex;align-items:center;gap:10px;margin-bottom:16px}
+  header.app .logo{
+    width:38px;height:38px;border-radius:12px;flex:none;
+    background:linear-gradient(135deg,var(--acc),var(--acc2));
+    display:grid;place-items:center;color:#06231f;font-weight:900;font-size:1.05rem;
+    box-shadow:0 6px 18px rgba(56,189,248,.22);
+  }
+  header.app h1{font-size:1.12rem;margin:0;letter-spacing:.2px}
+  header.app p{margin:1px 0 0;font-size:.76rem;color:var(--muted)}
+
+  .card{
+    background:var(--card);border:1px solid var(--line);border-radius:18px;
+    padding:16px;margin-bottom:14px;box-shadow:0 10px 30px rgba(0,0,0,.25);
+  }
+  .card h2{font-size:.74rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin:0 0 10px;font-weight:700}
+  .muted{color:var(--muted)}
+  .small{font-size:.82rem}
+
+  /* ---- mode toggle ---- */
+  .mode-toggle{
+    display:flex;gap:6px;padding:5px;background:var(--card);border:1px solid var(--line);
+    border-radius:16px;margin-bottom:14px;
+  }
+  .mode-btn{
+    flex:1;padding:12px 10px;border-radius:12px;background:transparent;color:var(--muted);
+    font-family:inherit;font-size:.9rem;font-weight:800;cursor:pointer;border:none;
+    transition:.18s;letter-spacing:.2px;
+  }
+  .mode-btn:hover{color:var(--txt)}
+  .mode-btn.active{
+    background:linear-gradient(135deg,var(--acc),var(--acc2));color:#06231f;
+    box-shadow:0 4px 14px rgba(56,189,248,.22);
+  }
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{
+    display:inline-flex;align-items:center;gap:9px;padding:9px 13px;border-radius:999px;
+    border:1px solid var(--line);background:var(--card2);color:var(--txt);
+    font-size:.92rem;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit;
+  }
+  .chip:hover{border-color:#3b4252;transform:translateY(-1px)}
+  .chip.on{
+    background:linear-gradient(135deg,rgba(94,234,212,.16),rgba(56,189,248,.16));
+    border-color:var(--acc);color:#fff;box-shadow:0 0 0 1px rgba(94,234,212,.25) inset;
+  }
+  .chip .rm{opacity:.4;font-size:1.05rem;line-height:1;font-weight:400}
+  .chip .rm:hover{opacity:1;color:var(--neg)}
+
+  .row{display:flex;gap:8px;margin-top:12px}
+  input[type=text],input[type=number]{
+    font-family:inherit;background:#0c0e13;border:1px solid var(--line);color:var(--txt);
+    border-radius:11px;padding:11px 12px;font-size:.98rem;width:100%;
+  }
+  input:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px rgba(94,234,212,.13)}
+  input[type=number]{-moz-appearance:textfield;font-variant-numeric:tabular-nums}
+  input[type=number]::-webkit-outer-spin-button,
+  input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+  button{font-family:inherit;cursor:pointer;border:none;border-radius:12px;font-weight:700;transition:.15s}
+  .btn{padding:12px 18px;font-size:.95rem;background:var(--card2);color:var(--txt);border:1px solid var(--line)}
+  .btn:hover{background:#242935}
+  .btn:disabled{opacity:.38;cursor:not-allowed}
+  .btn-primary{
+    background:linear-gradient(135deg,var(--acc),var(--acc2));color:#06231f;width:100%;
+    padding:15px;font-size:1rem;letter-spacing:.3px;box-shadow:0 8px 22px rgba(56,189,248,.2);
+  }
+  .btn-primary:active{transform:scale(.99)}
+  .btn-gold{
+    background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#2a1a00;width:100%;
+    padding:15px;font-size:1rem;letter-spacing:.3px;box-shadow:0 8px 22px rgba(251,191,36,.25);
+  }
+  .btn-danger{background:rgba(248,113,113,.12);border:1px solid rgba(248,113,113,.4);color:#fca5a5}
+  .btn-danger:hover{background:rgba(248,113,113,.2)}
+  .btn-sm{padding:8px 12px;font-size:.82rem}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  .field label{display:block;font-size:.72rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:6px;font-weight:700}
+  .hint{font-size:.74rem;color:var(--muted);margin-top:5px;line-height:1.35}
+
+  .pill{
+    display:inline-block;padding:4px 10px;border-radius:999px;font-size:.72rem;font-weight:700;
+    background:rgba(94,234,212,.12);color:var(--acc);border:1px solid rgba(94,234,212,.25);
+  }
+  .pill-gold{
+    background:rgba(251,191,36,.12);color:var(--gold);border-color:rgba(251,191,36,.3);
+  }
+
+  /* ---- game ---- */
+  .round-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:4px;flex-wrap:wrap}
+  .round-head .rt{font-size:1.1rem;font-weight:800}
+  .round-head .rt b{color:var(--acc)}
+  .round-head .rt small{font-size:.72rem;color:var(--gold);font-weight:800;letter-spacing:.08em;
+    text-transform:uppercase;margin-right:6px;display:inline-block}
+
+  table.entry{width:100%;border-collapse:collapse;table-layout:fixed}
+  table.entry th{font-size:.68rem;text-transform:uppercase;letter-spacing:.09em;color:var(--muted);padding:8px 4px;font-weight:700;text-align:center}
+  table.entry th:first-child{text-align:left}
+  table.entry th:nth-child(1){width:34%}
+  table.entry th:nth-child(2){width:22%}
+  table.entry th:nth-child(3){width:22%}
+  table.entry th:nth-child(4){width:22%}
+  table.entry td{padding:5px 4px;text-align:center;border-top:1px solid var(--line)}
+  table.entry td.pname{
+    text-align:left;font-weight:700;font-size:.93rem;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-left:2px;
+  }
+  table.entry tfoot td{border-top:2px solid var(--line);font-weight:800;font-size:.88rem;padding-top:10px;color:var(--muted)}
+  table.entry tfoot td:first-child{text-align:left}
+
+  .cell{
+    width:100%;padding:11px 2px;border-radius:11px;border:1px solid var(--line);
+    background:#0c0e13;color:var(--txt);font-size:1.08rem;font-weight:800;
+    text-align:center;font-variant-numeric:tabular-nums;font-family:inherit;
+  }
+  .cell:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px rgba(94,234,212,.13)}
+  .cell.invalid{border-color:var(--neg);background:rgba(248,113,113,.06)}
+  .score{font-weight:800;font-variant-numeric:tabular-nums;font-size:1rem;color:var(--muted)}
+
+  .pos{color:var(--pos)!important}
+  .neg{color:var(--neg)!important}
+
+  /* ---- standings ---- */
+  .stand-row{
+    display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;
+    background:var(--card2);border:1px solid var(--line);margin-bottom:7px;
+  }
+  .stand-row .rank{
+    width:24px;height:24px;flex:none;border-radius:8px;display:grid;place-items:center;
+    font-size:.74rem;font-weight:800;background:#0c0e13;color:var(--muted);border:1px solid var(--line);
+  }
+  .stand-row.lead .rank{background:linear-gradient(135deg,var(--acc),var(--acc2));color:#06231f;border-color:transparent}
+  .stand-row .nm{flex:1;font-weight:700;font-size:.95rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .stand-row .val{font-weight:800;font-variant-numeric:tabular-nums;font-size:1.02rem;text-align:right}
+  .stand-row .sub{font-size:.7rem;color:var(--muted);font-weight:700;font-variant-numeric:tabular-nums;
+    display:block;text-align:right;margin-top:1px}
+
+  /* ---- matrix ---- */
+  .scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;margin:0 -4px}
+  table.matrix{border-collapse:collapse;width:100%;min-width:340px;font-variant-numeric:tabular-nums}
+  table.matrix th,table.matrix td{padding:9px 6px;text-align:center;font-size:.86rem;border-bottom:1px solid var(--line)}
+  table.matrix th{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:700}
+  table.matrix td.rd,table.matrix th.rd{color:var(--muted);font-weight:800;width:38px;font-size:.78rem}
+  table.matrix tr.tot td{border-top:2px solid var(--line);border-bottom:none;font-weight:800;padding-top:11px}
+  table.matrix td,table.matrix th{white-space:nowrap}
+
+  .winner{
+    text-align:center;padding:22px 14px;border-radius:18px;
+    background:linear-gradient(135deg,rgba(94,234,212,.14),rgba(56,189,248,.14));
+    border:1px solid rgba(94,234,212,.35);margin-bottom:14px;
+  }
+  .winner.gold{
+    background:linear-gradient(135deg,rgba(251,191,36,.16),rgba(245,158,11,.14));
+    border-color:rgba(251,191,36,.4);
+  }
+  .winner .trophy{font-size:2rem;line-height:1}
+  .winner .wname{font-size:1.5rem;font-weight:900;margin:6px 0 2px;letter-spacing:.2px}
+  .winner .wscore{font-size:.95rem;color:var(--acc);font-weight:700}
+  .winner.gold .wscore{color:var(--gold)}
+  .winner .wmeta{font-size:.78rem;color:var(--muted);margin-top:6px;font-weight:700}
+
+  .actions{display:flex;gap:10px;margin-top:14px}
+  .actions .btn{flex:1}
+
+  /* ---- history ---- */
+  .hist-day{margin-bottom:14px}
+  .hist-day:last-child{margin-bottom:0}
+  .hist-day-title{
+    font-size:.7rem;text-transform:uppercase;letter-spacing:.11em;color:var(--muted);
+    font-weight:800;margin:0 0 8px;
+  }
+  .hist-item{
+    background:var(--card2);border:1px solid var(--line);border-radius:14px;
+    padding:12px;margin-bottom:8px;
+  }
+  .hist-item.tour{border-left:3px solid var(--gold)}
+  .hist-item:last-child{margin-bottom:0}
+  .hist-top{display:flex;align-items:center;gap:8px}
+  .hist-time{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.78rem;font-weight:700;flex:none}
+  .hist-win{flex:1;font-weight:800;font-size:.93rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hist-del{
+    width:26px;height:26px;flex:none;border-radius:8px;background:transparent;
+    border:1px solid transparent;color:var(--muted);font-size:1.05rem;line-height:1;padding:0;
+  }
+  .hist-del:hover{background:rgba(248,113,113,.12);color:var(--neg);border-color:rgba(248,113,113,.35)}
+  .hist-meta{font-size:.74rem;color:var(--muted);margin-top:4px}
+  .hist-name{font-size:.88rem;font-weight:800;color:var(--gold);margin-bottom:3px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .hist-scores{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+  .hist-scores span{
+    font-size:.77rem;padding:3px 9px;border-radius:999px;background:#0c0e13;
+    border:1px solid var(--line);font-variant-numeric:tabular-nums;font-weight:700;
+  }
+  details.hist-details{margin-top:9px}
+  details.hist-details summary{font-size:.68rem}
+
+  .toast{
+    position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);
+    background:#242935;border:1px solid var(--line);color:var(--txt);
+    padding:11px 18px;border-radius:12px;font-size:.86rem;font-weight:600;
+    opacity:0;pointer-events:none;transition:.25s;z-index:99;box-shadow:0 10px 30px rgba(0,0,0,.4);
+    max-width:90vw;text-align:center;
+  }
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+
+  details summary{
+    cursor:pointer;font-size:.74rem;text-transform:uppercase;letter-spacing:.12em;
+    color:var(--muted);font-weight:700;list-style:none;padding:2px 0;
+  }
+  details summary::-webkit-details-marker{display:none}
+  details summary::before{content:"▸ ";transition:.2s;display:inline-block}
+  details[open] summary::before{content:"▾ "}
+  details[open] summary{margin-bottom:10px}
+
+  [hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="app">
+    <div class="logo">C</div>
+    <div>
+      <h1>Call Keeper</h1>
+      <p>Call-based trick scoring · up to 5 players</p>
+    </div>
+  </header>
+
+  <!-- ============ SETUP ============ -->
+  <section id="setupScreen">
+
+    <div class="mode-toggle">
+      <button class="mode-btn active" data-mode="friendly" type="button">🎯 Friendly Match</button>
+      <button class="mode-btn" data-mode="tournament" type="button">🏆 Tournament</button>
+    </div>
+
+    <!-- Players (shared) -->
+    <div class="card">
+      <h2>Players <span class="pill" id="selCountWrap"><span id="selCount">0</span>/5</span></h2>
+      <div class="chips" id="playerList"></div>
+      <div class="row">
+        <input type="text" id="newPlayer" placeholder="Add player name…" autocomplete="off" maxlength="18">
+        <button class="btn" id="addPlayerBtn" style="flex:none;padding:11px 18px">Add</button>
+      </div>
+      <div class="hint">Tap a saved name to select / deselect. Names are saved in this browser for next time.</div>
+    </div>
+
+    <!-- ---------- FRIENDLY ---------- -->
+    <div id="friendlySettings">
+      <div class="card">
+        <h2>Match Settings</h2>
+        <div class="grid2">
+          <div class="field">
+            <label for="roundsInput">Rounds</label>
+            <input type="number" id="roundsInput" min="1" step="1" placeholder="∞">
+            <div class="hint">Leave blank to play until End Game.</div>
+          </div>
+          <div class="field">
+            <label for="minCall">Minimum Call</label>
+            <input type="number" id="minCall" min="1" step="1" value="3">
+            <div class="hint" id="minCallHint">Auto-set by player count.</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-primary" id="startBtn" disabled>Start Friendly Match</button>
+
+      <div class="card" style="margin-top:14px">
+        <h2>Friendly Match History <span class="pill" id="histCount">0</span></h2>
+        <div id="historyList"></div>
+        <div class="actions" id="histActions" hidden>
+          <button class="btn btn-danger btn-sm" id="clearHistoryBtn">Clear Friendly History</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------- TOURNAMENT ---------- -->
+    <div id="tournamentSettings" hidden>
+      <div class="card">
+        <h2>Tournament Settings</h2>
+        <div class="field" style="margin-bottom:12px">
+          <label for="tName">Tournament Name</label>
+          <input type="text" id="tName" placeholder="e.g. Friday Night Cup" maxlength="30">
+        </div>
+        <div class="grid3">
+          <div class="field">
+            <label for="tGames">Games</label>
+            <input type="number" id="tGames" min="1" max="20" step="1" value="3">
+          </div>
+          <div class="field">
+            <label for="tRounds">Rounds / Game</label>
+            <input type="number" id="tRounds" min="1" step="1" placeholder="∞">
+          </div>
+          <div class="field">
+            <label for="tMinCall">Min Call</label>
+            <input type="number" id="tMinCall" min="1" step="1" value="3">
+          </div>
+        </div>
+        <div class="hint" id="tHint">Rounds / Game blank = play each game until End Game is tapped.</div>
+      </div>
+      <button class="btn btn-gold" id="startTournamentBtn" disabled>Start Tournament</button>
+
+      <div class="card" style="margin-top:14px">
+        <h2>🏆 Tournament Leaderboard <span class="pill pill-gold" id="tourCount">0</span></h2>
+        <div id="tourList"></div>
+        <div class="actions" id="tourActions" hidden>
+          <button class="btn btn-danger btn-sm" id="clearTourBtn">Clear Tournament History</button>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- ============ GAME ============ -->
+  <section id="gameScreen" hidden>
+    <div class="card">
+      <div class="round-head">
+        <div class="rt" id="roundTitle"></div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span class="pill pill-gold" id="tourProgress" hidden></span>
+          <span class="pill" id="minCallLabel"></span>
+        </div>
+      </div>
+
+      <table class="entry">
+        <thead>
+          <tr>
+            <th>Player</th>
+            <th>Call</th>
+            <th>Won</th>
+            <th>Score</th>
+          </tr>
+        </thead>
+        <tbody id="entryBody"></tbody>
+        <tfoot>
+          <tr>
+            <td>Totals</td>
+            <td id="sumCall">0</td>
+            <td id="sumWon">0</td>
+            <td id="sumScore">0</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <div class="hint" id="trickHint" style="margin-top:10px"></div>
+
+      <div class="actions">
+        <button class="btn btn-primary" id="saveRoundBtn" style="flex:2">Save Round &amp; Continue</button>
+        <button class="btn btn-danger" id="endGameBtn" style="flex:1">End Game</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2><span id="standingsTitle">Standings</span> <span class="muted" style="text-transform:none;letter-spacing:0">(live)</span></h2>
+      <div id="standings"></div>
+    </div>
+
+    <div class="card">
+      <details id="historyDetails">
+        <summary>Round History (this game)</summary>
+        <div id="history"></div>
+      </details>
+    </div>
+  </section>
+
+  <!-- ============ END ============ -->
+  <section id="endScreen" hidden>
+    <div class="winner" id="endWinnerBox">
+      <div class="trophy" id="endTrophy">🏆</div>
+      <div class="wname" id="endName"></div>
+      <div class="wscore" id="endScore"></div>
+      <div class="wmeta" id="endMeta"></div>
+    </div>
+
+    <div class="card">
+      <h2 id="endStandingsTitle">Final Standings</h2>
+      <div id="endStandings"></div>
+    </div>
+
+    <div class="card" id="endBreakdownCard">
+      <h2 id="endBreakdownTitle">Round Breakdown</h2>
+      <div id="endBreakdown"></div>
+    </div>
+
+    <div class="actions" id="endActions"></div>
+  </section>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  'use strict';
+
+  const MAX_PLAYERS = 5;
+  const LS_KEY   = 'callKeeper.savedPlayers.v1';
+  const HIST_KEY = 'callKeeper.history.v1';        // friendly matches
+  const TOUR_KEY = 'callKeeper.tournaments.v1';    // tournaments (separate board)
+  const HIST_MAX = 80;
+  const TOUR_MAX = 40;
+
+  const $  = (s, r=document) => r.querySelector(s);
+  const $$ = (s, r=document) => Array.from(r.querySelectorAll(s));
+
+  let savedPlayers = [];
+  let selected = new Set();
+  let state = null;
+  let rowRefs = [];
+  let toastTimer = null;
+
+  let friendlyHistory = [];
+  let tournaments = [];
+  let mode = 'friendly';   // 'friendly' | 'tournament'
+
+  /* ================= utils ================= */
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+  function toast(msg){
+    const t = $('#toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(()=>t.classList.remove('show'), 2600);
+  }
+  function signed(n){ return (n > 0 ? '+' : '') + n; }
+  function uid(prefix){
+    return (prefix||'x') + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  }
+
+  /* SCORING RULE
+     Made call exactly  -> call * 10
+     Extra tricks       -> call * 10 + extra
+     Missed the call    -> -(shortfall)          */
+  function computeScore(call, won){
+    if (!Number.isFinite(call) || !Number.isFinite(won)) return null;
+    if (won >= call) return call * 10 + (won - call);
+    return -(call - won);
+  }
+  function defaultMinCall(n){ return Math.max(1, Math.floor(13 / n)); }
+
+  /** Tricks in a round must total 13 (4 players) or 10 (5 players). */
+  function tricksTarget(){
+    if (!state) return null;
+    if (state.players.length === 4) return 13;
+    if (state.players.length === 5) return 10;
+    return null;
+  }
+
+  /* ================= storage ================= */
+  function loadAll(){
+    try{
+      const raw = localStorage.getItem(LS_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      savedPlayers = Array.isArray(arr) ? arr.filter(x => typeof x === 'string' && x.trim()) : [];
+    }catch(e){ savedPlayers = []; }
+
+    try{
+      const raw = localStorage.getItem(HIST_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      friendlyHistory = Array.isArray(arr) ? arr.filter(g => g && g.date && g.players) : [];
+    }catch(e){ friendlyHistory = []; }
+
+    try{
+      const raw = localStorage.getItem(TOUR_KEY);
+      const arr = raw ? JSON.parse(raw) : [];
+      tournaments = Array.isArray(arr) ? arr.filter(t => t && t.date && t.players) : [];
+    }catch(e){ tournaments = []; }
+  }
+  function persistSaved(){ try{ localStorage.setItem(LS_KEY, JSON.stringify(savedPlayers)); }catch(e){} }
+  function persistFriendly(){ try{ localStorage.setItem(HIST_KEY, JSON.stringify(friendlyHistory.slice(0, HIST_MAX))); }catch(e){} }
+  function persistTournaments(){ try{ localStorage.setItem(TOUR_KEY, JSON.stringify(tournaments.slice(0, TOUR_MAX))); }catch(e){} }
+
+  /* ================= mode toggle ================= */
+  function setMode(m){
+    mode = m;
+    $$('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+    $('#friendlySettings').hidden   = m !== 'friendly';
+    $('#tournamentSettings').hidden = m !== 'tournament';
+    updateMinCall();
+    updateStartButtons();
+  }
+
+  /* ================= setup screen ================= */
+  function renderPlayers(){
+    const wrap = $('#playerList');
+    wrap.innerHTML = '';
+
+    if (savedPlayers.length === 0){
+      const p = document.createElement('p');
+      p.className = 'muted small';
+      p.style.margin = '2px 0';
+      p.textContent = 'No saved players yet — add one below.';
+      wrap.appendChild(p);
+    }
+
+    savedPlayers.forEach(name => {
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip' + (selected.has(name) ? ' on' : '');
+      chip.innerHTML = '<span>' + escapeHtml(name) + '</span><span class="rm" title="Remove from saved list">×</span>';
+
+      chip.addEventListener('click', (e) => {
+        if (e.target.classList.contains('rm')){
+          e.stopPropagation();
+          savedPlayers = savedPlayers.filter(n => n !== name);
+          selected.delete(name);
+          persistSaved();
+          renderPlayers();
+          updateMinCall();
+          updateStartButtons();
+          return;
+        }
+        if (selected.has(name)){
+          selected.delete(name);
+        } else {
+          if (selected.size >= MAX_PLAYERS){ toast('Maximum ' + MAX_PLAYERS + ' players'); return; }
+          selected.add(name);
+        }
+        renderPlayers();
+        updateMinCall();
+        updateStartButtons();
+      });
+
+      wrap.appendChild(chip);
+    });
+
+    $('#selCount').textContent = selected.size;
+  }
+
+  function addPlayer(){
+    const input = $('#newPlayer');
+    const name = input.value.trim();
+    if (!name) return;
+
+    const existing = savedPlayers.find(p => p.toLowerCase() === name.toLowerCase());
+    let finalName;
+
+    if (existing){
+      finalName = existing;
+    } else {
+      savedPlayers.push(name);
+      persistSaved();
+      finalName = name;
+    }
+
+    if (!selected.has(finalName)){
+      if (selected.size >= MAX_PLAYERS){
+        toast('Maximum ' + MAX_PLAYERS + ' players');
+        input.value = '';
+        return;
+      }
+      selected.add(finalName);
+    }
+
+    input.value = '';
+    renderPlayers();
+    updateMinCall();
+    updateStartButtons();
+  }
+
+  function updateMinCall(){
+    const n = selected.size;
+    if (n >= 2){
+      $('#minCall').value  = defaultMinCall(n);
+      $('#tMinCall').value = defaultMinCall(n);
+      $('#minCallHint').textContent = 'Auto for ' + n + ' players — tap to change.';
+      $('#tHint').textContent = 'Rounds/Game blank = play each game until End Game is tapped. Min call auto-set for ' + n + ' players.';
+    } else {
+      $('#minCallHint').textContent = 'Select at least 2 players.';
+      $('#tHint').textContent = 'Select at least 2 players.';
+    }
+  }
+
+  function updateStartButtons(){
+    const ok = selected.size >= 2;
+    $('#startBtn').disabled = !ok;
+    $('#startTournamentBtn').disabled = !ok;
+  }
+
+  /* ================= game state ================= */
+  function showScreen(name){
+    $('#setupScreen').hidden = name !== 'setup';
+    $('#gameScreen').hidden  = name !== 'game';
+    $('#endScreen').hidden   = name !== 'end';
+    window.scrollTo(0, 0);
+  }
+
+  function startFriendly(){
+    const names = Array.from(selected);
+    if (names.length < 2){ toast('Select at least 2 players'); return; }
+
+    const minCall = Math.max(1, parseInt($('#minCall').value, 10) || 1);
+    const roundsVal = parseInt($('#roundsInput').value, 10);
+
+    state = {
+      mode: 'friendly',
+      players: names,
+      minCall: minCall,
+      totalRounds: Number.isFinite(roundsVal) && roundsVal > 0 ? roundsVal : null,
+      rounds: [],
+      roundNo: 1,
+      historySaved: false
+    };
+
+    showScreen('game');
+    renderRound();
+  }
+
+  function startTournament(){
+    const names = Array.from(selected);
+    if (names.length < 2){ toast('Select at least 2 players'); return; }
+
+    const games = Math.max(1, parseInt($('#tGames').value, 10) || 1);
+    const roundsVal = parseInt($('#tRounds').value, 10);
+    const minCall = Math.max(1, parseInt($('#tMinCall').value, 10) || 1);
+    const tName = ($('#tName').value.trim()) || ('Tournament #' + (tournaments.length + 1));
+
+    state = {
+      mode: 'tournament',
+      tournamentName: tName,
+      players: names,
+      minCall: minCall,
+      totalRounds: Number.isFinite(roundsVal) && roundsVal > 0 ? roundsVal : null,
+      totalGames: games,
+      currentGameNo: 1,
+      games: [],
+      rounds: [],
+      roundNo: 1,
+      historySaved: false
+    };
+
+    showScreen('game');
+    renderRound();
+  }
+
+  /* Totals for current game only */
+  function gameTotals(){
+    const t = {};
+    state.players.forEach(p => t[p] = 0);
+    state.rounds.forEach(r => r.entries.forEach(e => {
+      if (t[e.name] === undefined) t[e.name] = 0;
+      t[e.name] += e.score;
+    }));
+    return t;
+  }
+
+  /* Totals across all completed games in the tournament */
+  function tournamentTotals(){
+    const t = {};
+    state.players.forEach(p => t[p] = 0);
+    if (state.mode === 'tournament'){
+      (state.games || []).forEach(g => {
+        Object.keys(g.totals || {}).forEach(p => {
+          t[p] = (t[p] || 0) + g.totals[p];
+        });
+      });
+    }
+    return t;
+  }
+
+  /* ================= round rendering ================= */
+  function renderRound(){
+    const isTour = state.mode === 'tournament';
+    const suffix = state.totalRounds
+      ? ' <span class="muted" style="font-size:.85rem">of ' + state.totalRounds + '</span>'
+      : '';
+    $('#roundTitle').innerHTML = 'Round <b>' + state.roundNo + '</b>' + suffix;
+
+    const tp = $('#tourProgress');
+    if (isTour){
+      tp.hidden = false;
+      tp.textContent = '🏆 Game ' + state.currentGameNo + ' / ' + state.totalGames;
+    } else {
+      tp.hidden = true;
+    }
+
+    $('#minCallLabel').textContent = 'Min call ' + state.minCall;
+    $('#standingsTitle').textContent = isTour ? 'Tournament Standings' : 'Standings';
+
+    const tbody = $('#entryBody');
+    tbody.innerHTML = '';
+    rowRefs = [];
+
+    state.players.forEach((name) => {
+      const tr = document.createElement('tr');
+
+      const tdName = document.createElement('td');
+      tdName.className = 'pname';
+      tdName.textContent = name;
+      tdName.title = name;
+
+      const tdCall = document.createElement('td');
+      const callInp = document.createElement('input');
+      callInp.type = 'number';
+      callInp.className = 'cell call';
+      callInp.inputMode = 'numeric';
+      callInp.min = String(state.minCall);
+      callInp.step = '1';
+      callInp.autocomplete = 'off';
+      tdCall.appendChild(callInp);
+
+      const tdWon = document.createElement('td');
+      const wonInp = document.createElement('input');
+      wonInp.type = 'number';
+      wonInp.className = 'cell won';
+      wonInp.inputMode = 'numeric';
+      wonInp.min = '0';
+      wonInp.step = '1';
+      wonInp.autocomplete = 'off';
+      tdWon.appendChild(wonInp);
+
+      const tdScore = document.createElement('td');
+      tdScore.className = 'score';
+      tdScore.textContent = '–';
+
+      tr.append(tdName, tdCall, tdWon, tdScore);
+      tbody.appendChild(tr);
+
+      rowRefs.push({ call: callInp, won: wonInp, scoreEl: tdScore });
+
+      callInp.addEventListener('input', updateLive);
+      wonInp.addEventListener('input', updateLive);
+      callInp.addEventListener('focus', e => e.target.select());
+      wonInp.addEventListener('focus', e => e.target.select());
+    });
+
+    updateLive();
+    renderHistory();
+
+    if (rowRefs[0]) rowRefs[0].call.focus({ preventScroll: true });
+  }
+
+  function updateLive(){
+    const base = gameTotals();
+    const live = {};
+    state.players.forEach(p => live[p] = 0);
+
+    let sumCall = 0, sumWon = 0, sumScore = 0;
+
+    rowRefs.forEach((r, i) => {
+      const c = parseInt(r.call.value, 10);
+      const w = parseInt(r.won.value, 10);
+
+      if (Number.isFinite(c) && c < state.minCall) r.call.classList.add('invalid');
+      else r.call.classList.remove('invalid');
+
+      const s = computeScore(c, w);
+      if (s === null){
+        r.scoreEl.textContent = '–';
+        r.scoreEl.className = 'score';
+      } else {
+        r.scoreEl.textContent = signed(s);
+        r.scoreEl.className = 'score ' + (s > 0 ? 'pos' : s < 0 ? 'neg' : '');
+        live[state.players[i]] += s;
+        sumScore += s;
+      }
+
+      if (Number.isFinite(c)) sumCall += c;
+      if (Number.isFinite(w)) sumWon += w;
+    });
+
+    $('#sumCall').textContent = sumCall;
+    $('#sumScore').textContent = signed(sumScore);
+    $('#sumScore').className = sumScore > 0 ? 'pos' : sumScore < 0 ? 'neg' : '';
+
+    // ---- tricks-total enforcement ----
+    const target = tricksTarget();
+    const wonEl = $('#sumWon');
+    const hintEl = $('#trickHint');
+
+    if (target !== null){
+      wonEl.textContent = sumWon + ' / ' + target;
+      wonEl.className = sumWon === target ? 'pos' : 'neg';
+      if (sumWon === target){
+        hintEl.innerHTML = '<span class="pos">✓ Tricks total ' + target + ' — ready to save.</span>';
+      } else {
+        hintEl.innerHTML = '<span class="neg">Tricks won must total exactly ' + target +
+                           ' with ' + state.players.length + ' players (currently ' + sumWon + ').</span>';
+      }
+    } else {
+      wonEl.textContent = sumWon;
+      wonEl.className = '';
+      hintEl.textContent = '';
+    }
+
+    renderStandings(live, base);
+  }
+
+  function renderStandings(live, base){
+    const isTour = state.mode === 'tournament';
+    const tBase = isTour ? tournamentTotals() : null;
+
+    const rows = state.players.map(p => {
+      const gameTotal = (base[p] || 0) + (live[p] || 0);
+      const sortVal = isTour ? ((tBase[p] || 0) + gameTotal) : gameTotal;
+      return { name: p, game: gameTotal, tour: sortVal, sort: sortVal };
+    }).sort((a, b) => b.sort - a.sort);
+
+    const best = rows.length ? rows[0].sort : 0;
+
+    $('#standings').innerHTML = rows.map((r, i) => {
+      const lead = r.sort === best && r.sort !== 0 ? ' lead' : '';
+      const cls = r.sort > 0 ? 'pos' : r.sort < 0 ? 'neg' : '';
+      let valHtml = '<span class="val ' + cls + '">' + signed(r.sort) + '</span>';
+      if (isTour){
+        valHtml = '<span class="val ' + cls + '">' + signed(r.sort) +
+                  '<span class="sub">game ' + signed(r.game) + '</span></span>';
+      }
+      return '<div class="stand-row' + lead + '">' +
+               '<span class="rank">' + (i + 1) + '</span>' +
+               '<span class="nm">' + escapeHtml(r.name) + '</span>' +
+               valHtml +
+             '</div>';
+    }).join('');
+  }
+
+  function renderHistory(){
+    const box = $('#history');
+    if (state.rounds.length === 0){
+      box.innerHTML = '<p class="muted small" style="margin:0">No completed rounds yet.</p>';
+      return;
+    }
+    box.innerHTML = matrixHtml(state.players, state.rounds, gameTotals());
+  }
+
+  /* ---------- shared matrix helpers ---------- */
+  function matrixHtml(players, rounds, totalsMap){
+    if (!rounds || rounds.length === 0) return '<p class="muted small">No rounds recorded.</p>';
+
+    let h = '<div class="scroll"><table class="matrix"><thead><tr><th class="rd">Rd</th>';
+    players.forEach(p => h += '<th>' + escapeHtml(p) + '</th>');
+    h += '</tr></thead><tbody>';
+
+    rounds.forEach(r => {
+      h += '<tr><td class="rd">' + r.no + '</td>';
+      players.forEach(p => {
+        const e = r.entries.find(x => x.name === p);
+        if (!e){ h += '<td class="muted">–</td>'; return; }
+        const cls = e.score > 0 ? 'pos' : e.score < 0 ? 'neg' : '';
+        h += '<td class="' + cls + '">' + signed(e.score) + '</td>';
+      });
+      h += '</tr>';
+    });
+
+    h += '<tr class="tot"><td class="rd">Σ</td>';
+    players.forEach(p => {
+      const v = (totalsMap && totalsMap[p]) || 0;
+      const cls = v > 0 ? 'pos' : v < 0 ? 'neg' : '';
+      h += '<td class="' + cls + '">' + signed(v) + '</td>';
+    });
+    h += '</tr></tbody></table></div>';
+    return h;
+  }
+
+  /* matrix of per-game totals across the tournament */
+  function tournamentBreakdownHtml(players, games, tourTotals){
+    if (!games || games.length === 0) return '<p class="muted small">No games recorded.</p>';
+
+    let h = '<div class="scroll"><table class="matrix"><thead><tr><th class="rd">Gm</th>';
+    players.forEach(p => h += '<th>' + escapeHtml(p) + '</th>');
+    h += '</tr></thead><tbody>';
+
+    games.forEach(g => {
+      h += '<tr><td class="rd">' + g.no + '</td>';
+      players.forEach(p => {
+        const v = (g.totals && g.totals[p]) || 0;
+        const cls = v > 0 ? 'pos' : v < 0 ? 'neg' : '';
+        h += '<td class="' + cls + '">' + signed(v) + '</td>';
+      });
+      h += '</tr>';
+    });
+
+    h += '<tr class="tot"><td class="rd">Σ</td>';
+    players.forEach(p => {
+      const v = (tourTotals && tourTotals[p]) || 0;
+      const cls = v > 0 ? 'pos' : v < 0 ? 'neg' : '';
+      h += '<td class="' + cls + '">' + signed(v) + '</td>';
+    });
+    h += '</tr></tbody></table></div>';
+    return h;
+  }
+
+  /* ================= round saving ================= */
+  function collectRound(){
+    const entries = [];
+    for (let i = 0; i < state.players.length; i++){
+      const name = state.players[i];
+      const c = parseInt(rowRefs[i].call.value, 10);
+      const w = parseInt(rowRefs[i].won.value, 10);
+
+      if (!Number.isFinite(c)){ toast('Enter a call for ' + name); rowRefs[i].call.focus(); return null; }
+      if (!Number.isFinite(w)){ toast('Enter tricks won for ' + name); rowRefs[i].won.focus(); return null; }
+      if (c < state.minCall){ toast('Minimum call is ' + state.minCall + ' for ' + name); rowRefs[i].call.focus(); return null; }
+      if (w < 0){ toast('Tricks won cannot be negative'); return null; }
+
+      entries.push({ name: name, call: c, won: w, score: computeScore(c, w) });
+    }
+
+    const target = tricksTarget();
+    if (target !== null){
+      const sum = entries.reduce((a, e) => a + e.won, 0);
+      if (sum !== target){
+        toast('Tricks won must total exactly ' + target +
+              ' with ' + state.players.length + ' players (currently ' + sum + ')');
+        return null;
+      }
+    }
+    return entries;
+  }
+
+  function saveRound(){
+    const entries = collectRound();
+    if (!entries) return;
+
+    state.rounds.push({ no: state.roundNo, entries: entries });
+    state.roundNo++;
+    renderHistory();
+
+    if (state.totalRounds && state.rounds.length >= state.totalRounds){
+      finishCurrentGame();
+      return;
+    }
+    renderRound();
+  }
+
+  function roundHasData(){
+    return rowRefs.some(r => r.call.value !== '' || r.won.value !== '');
+  }
+
+  function endGamePressed(){
+    if (roundHasData()){
+      const label = state.mode === 'tournament'
+        ? 'Game ' + state.currentGameNo + ' of ' + state.totalGames
+        : 'this match';
+      const ok = confirm('Round ' + state.roundNo + ' has scores entered.\n\nSave this round before ending ' + label + '?');
+      if (ok){
+        const entries = collectRound();
+        if (!entries) return;
+        state.rounds.push({ no: state.roundNo, entries: entries });
+      }
+    } else if (state.rounds.length === 0){
+      toast('Play at least one round first');
+      return;
+    }
+    finishCurrentGame();
+  }
+
+  /* ================= end game / end tournament ================= */
+  function finishCurrentGame(){
+    if (state.mode === 'friendly'){
+      finishFriendly();
+      return;
+    }
+
+    // Tournament: archive this game
+    const t = gameTotals();
+    state.games.push({
+      no: state.currentGameNo,
+      rounds: state.rounds.map(r => ({
+        no: r.no,
+        entries: r.entries.map(e => ({ name: e.name, call: e.call, won: e.won, score: e.score }))
+      })),
+      totals: t
+    });
+
+    if (state.currentGameNo >= state.totalGames){
+      finishTournament();
+    } else {
+      showGameComplete();
+    }
+  }
+
+  function finishFriendly(){
+    const t = gameTotals();
+    const rows = state.players.map(p => ({ name: p, total: t[p] || 0 }))
+                             .sort((a, b) => b.total - a.total);
+    const topScore = rows[0].total;
+    const winners = rows.filter(r => r.total === topScore);
+
+    const box = $('#endWinnerBox');
+    box.classList.remove('gold');
+
+    $('#endTrophy').textContent = '🏆';
+    if (winners.length > 1){
+      $('#endName').textContent = winners.map(w => w.name).join(' & ');
+      $('#endScore').textContent = 'Tied at ' + signed(topScore);
+    } else {
+      $('#endName').textContent = winners[0].name;
+      $('#endScore').textContent = signed(topScore) + ' points';
+    }
+    $('#endMeta').textContent = state.players.length + ' players · ' +
+      state.rounds.length + ' rounds · min call ' + state.minCall;
+
+    $('#endStandingsTitle').textContent = 'Final Standings';
+    $('#endStandings').innerHTML = rows.map((r, i) => {
+      const lead = r.total === topScore ? ' lead' : '';
+      const cls = r.total > 0 ? 'pos' : r.total < 0 ? 'neg' : '';
+      return '<div class="stand-row' + lead + '">' +
+               '<span class="rank">' + (i + 1) + '</span>' +
+               '<span class="nm">' + escapeHtml(r.name) + '</span>' +
+               '<span class="val ' + cls + '">' + signed(r.total) + '</span>' +
+             '</div>';
+    }).join('');
+
+    $('#endBreakdownTitle').textContent = 'Round Breakdown';
+    $('#endBreakdown').innerHTML = matrixHtml(state.players, state.rounds, t);
+
+    $('#endActions').innerHTML =
+      '<button class="btn" id="rematchBtn">Rematch</button>' +
+      '<button class="btn btn-primary" id="newGameBtn" style="flex:1.4">New Game</button>';
+
+    $('#rematchBtn').addEventListener('click', () => {
+      state.rounds = [];
+      state.roundNo = 1;
+      state.historySaved = false;
+      showScreen('game');
+      renderRound();
+    });
+    $('#newGameBtn').addEventListener('click', () => {
+      showScreen('setup');
+      renderPlayers();
+      renderHistoryList();
+      updateStartButtons();
+    });
+
+    saveFriendlyToHistory();
+    showScreen('end');
+    window.scrollTo(0, 0);
+  }
+
+  /* Intermediate screen between tournament games */
+  function showGameComplete(){
+    const game = state.games[state.games.length - 1];
+    const t = tournamentTotals();
+
+    const sorted = state.players.slice().sort((a, b) => (game.totals[b] || 0) - (game.totals[a] || 0));
+    const topScore = game.totals[sorted[0]] || 0;
+    const winners = sorted.filter(p => (game.totals[p] || 0) === topScore);
+
+    $('#endWinnerBox').classList.remove('gold');
+    $('#endTrophy').textContent = '✅';
+    $('#endName').textContent = 'Game ' + game.no + ' complete';
+    $('#endScore').textContent = (winners.length > 1 ? 'Tied: ' : 'Winner: ') +
+                                 winners.join(' & ') + '  ' + signed(topScore);
+    $('#endMeta').textContent = state.tournamentName + ' · Game ' + game.no + ' of ' + state.totalGames;
+
+    // Tournament standings so far
+    const rows = state.players.map(p => ({ name: p, total: t[p] || 0 }))
+                              .sort((a, b) => b.total - a.total);
+    const tourTop = rows[0].total;
+
+    $('#endStandingsTitle').textContent = 'Tournament Leaderboard';
+    $('#endStandings').innerHTML = rows.map((r, i) => {
+      const lead = r.total === tourTop ? ' lead' : '';
+      const cls = r.total > 0 ? 'pos' : r.total < 0 ? 'neg' : '';
+      return '<div class="stand-row' + lead + '">' +
+               '<span class="rank">' + (i + 1) + '</span>' +
+               '<span class="nm">' + escapeHtml(r.name) + '</span>' +
+               '<span class="val ' + cls + '">' + signed(r.total) + '</span>' +
+             '</div>';
+    }).join('');
+
+    $('#endBreakdownTitle').textContent = 'Game-by-Game Totals';
+    $('#endBreakdown').innerHTML = tournamentBreakdownHtml(state.players, state.games, t);
+
+    const nextNo = game.no + 1;
+    $('#endActions').innerHTML =
+      '<button class="btn btn-danger" id="endTourEarlyBtn">End Tournament</button>' +
+      '<button class="btn btn-gold" id="nextGameBtn" style="flex:1.6">Start Game ' + nextNo + '</button>';
+
+    $('#nextGameBtn').addEventListener('click', () => {
+      state.currentGameNo++;
+      state.rounds = [];
+      state.roundNo = 1;
+      showScreen('game');
+      renderRound();
+    });
+    $('#endTourEarlyBtn').addEventListener('click', () => {
+      if (confirm('End tournament now with ' + state.games.length + ' of ' +
+                  state.totalGames + ' games played?')){
+        finishTournament();
+      }
+    });
+
+    showScreen('end');
+    window.scrollTo(0, 0);
+  }
+
+  function finishTournament(){
+    const t = tournamentTotals();
+    const rows = state.players.map(p => ({ name: p, total: t[p] || 0 }))
+                              .sort((a, b) => b.total - a.total);
+    const topScore = rows[0].total;
+    const winners = rows.filter(r => r.total === topScore);
+
+    $('#endWinnerBox').classList.add('gold');
+    $('#endTrophy').textContent = '🏆';
+    if (winners.length > 1){
+      $('#endName').textContent = winners.map(w => w.name).join(' & ');
+      $('#endScore').textContent = 'Tournament Champions · Tied at ' + signed(topScore);
+    } else {
+      $('#endName').textContent = winners[0].name;
+      $('#endScore').textContent = 'Tournament Champion · ' + signed(topScore) + ' points';
+    }
+    $('#endMeta').textContent = state.tournamentName + ' · ' + state.games.length +
+      ' of ' + state.totalGames + ' games · ' + state.players.length + ' players';
+
+    $('#endStandingsTitle').textContent = 'Tournament Leaderboard';
+    $('#endStandings').innerHTML = rows.map((r, i) => {
+      const lead = r.total === topScore ? ' lead' : '';
+      const cls = r.total > 0 ? 'pos' : r.total < 0 ? 'neg' : '';
+      return '<div class="stand-row' + lead + '">' +
+               '<span class="rank">' + (i + 1) + '</span>' +
+               '<span class="nm">' + escapeHtml(r.name) + '</span>' +
+               '<span class="val ' + cls + '">' + signed(r.total) + '</span>' +
+             '</div>';
+    }).join('');
+
+    $('#endBreakdownTitle').textContent = 'Game-by-Game Totals';
+    $('#endBreakdown').innerHTML = tournamentBreakdownHtml(state.players, state.games, t);
+
+    $('#endActions').innerHTML =
+      '<button class="btn" id="newTourBtn">New Tournament</button>' +
+      '<button class="btn btn-primary" id="homeBtn" style="flex:1.4">Home</button>';
+
+    $('#newTourBtn').addEventListener('click', () => {
+      showScreen('setup');
+      setMode('tournament');
+      renderPlayers();
+      renderTourList();
+      updateStartButtons();
+    });
+    $('#homeBtn').addEventListener('click', () => {
+      showScreen('setup');
+      renderPlayers();
+      renderHistoryList();
+      renderTourList();
+      updateStartButtons();
+    });
+
+    saveTournamentToHistory();
+    showScreen('end');
+    window.scrollTo(0, 0);
+  }
+
+  /* ================= saving records ================= */
+  function saveFriendlyToHistory(){
+    if (!state || state.historySaved) return;
+    state.historySaved = true;
+
+    const t = gameTotals();
+    friendlyHistory.unshift({
+      id: uid('f'),
+      date: new Date().toISOString(),
+      players: state.players.slice(),
+      minCall: state.minCall,
+      totalRounds: state.totalRounds,
+      rounds: state.rounds.map(r => ({
+        no: r.no,
+        entries: r.entries.map(e => ({ name: e.name, call: e.call, won: e.won, score: e.score }))
+      })),
+      totals: t
+    });
+    if (friendlyHistory.length > HIST_MAX) friendlyHistory.length = HIST_MAX;
+    persistFriendly();
+    renderHistoryList();
+  }
+
+  function saveTournamentToHistory(){
+    if (!state || state.historySaved) return;
+    state.historySaved = true;
+
+    const t = tournamentTotals();
+    tournaments.unshift({
+      id: uid('t'),
+      date: new Date().toISOString(),
+      name: state.tournamentName,
+      players: state.players.slice(),
+      minCall: state.minCall,
+      totalRounds: state.totalRounds,
+      totalGames: state.totalGames,
+      playedGames: state.games.length,
+      games: state.games.map(g => ({
+        no: g.no,
+        totals: Object.assign({}, g.totals),
+        rounds: g.rounds.map(r => ({
+          no: r.no,
+          entries: r.entries.map(e => ({ name: e.name, call: e.call, won: e.won, score: e.score }))
+        }))
+      })),
+      totals: t
+    });
+    if (tournaments.length > TOUR_MAX) tournaments.length = TOUR_MAX;
+    persistTournaments();
+    renderTourList();
+  }
+
+  /* ================= history rendering ================= */
+  function dayLabel(d){
+    const today = new Date();
+    const yest  = new Date(); yest.setDate(today.getDate() - 1);
+    const same = (a, b) => a.toDateString() === b.toDateString();
+    const fmt = d.toLocaleDateString(undefined, { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    if (same(d, today)) return 'Today · ' + fmt;
+    if (same(d, yest))  return 'Yesterday · ' + fmt;
+    return fmt;
+  }
+
+  function groupByDay(list){
+    const map = new Map();
+    const groups = [];
+    list.forEach(g => {
+      const d = new Date(g.date);
+      const key = d.toDateString();
+      if (!map.has(key)){
+        const grp = { date: d, games: [] };
+        map.set(key, grp);
+        groups.push(grp);
+      }
+      map.get(key).games.push(g);
+    });
+    groups.sort((a, b) => b.date - a.date);
+    groups.forEach(g => g.games.sort((a, b) => new Date(b.date) - new Date(a.date)));
+    return groups;
+  }
+
+  /* ----- friendly history ----- */
+  function friendlyItemHtml(g){
+    const d = new Date(g.date);
+    const time = d.toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit' });
+
+    const entries = Object.entries(g.totals || {});
+    let best = -Infinity;
+    entries.forEach(([, v]) => { if (v > best) best = v; });
+    const winners = entries.filter(([, v]) => v === best).map(([k]) => k);
+
+    const winTxt = (winners.length > 1 ? 'Tie: ' : '🏆 ') + winners.join(' & ') + '  ' + signed(best);
+    const scores = g.players.map(p => '<span>' + escapeHtml(p) + ' ' + signed(g.totals[p] || 0) + '</span>').join('');
+    const n = g.players.length;
+    const rds = g.rounds.length;
+    const meta = n + ' players · ' + rds + ' round' + (rds === 1 ? '' : 's') + ' · min call ' + g.minCall;
+
+    return '<div class="hist-item">' +
+      '<div class="hist-top">' +
+        '<span class="hist-time">' + time + '</span>' +
+        '<span class="hist-win">' + escapeHtml(winTxt) + '</span>' +
+        '<button class="hist-del" data-id="' + g.id + '" title="Delete">×</button>' +
+      '</div>' +
+      '<div class="hist-meta">' + meta + '</div>' +
+      '<div class="hist-scores">' + scores + '</div>' +
+      '<details class="hist-details"><summary>Round breakdown</summary>' +
+        matrixHtml(g.players, g.rounds, g.totals) +
+      '</details>' +
+    '</div>';
+  }
+
+  function renderHistoryList(){
+    const box = $('#historyList');
+    $('#histCount').textContent = friendlyHistory.length;
+    $('#histActions').hidden = friendlyHistory.length === 0;
+
+    if (friendlyHistory.length === 0){
+      box.innerHTML = '<p class="muted small" style="margin:0">No friendly matches yet. Completed matches appear here, grouped by date.</p>';
+      return;
+    }
+
+    const groups = groupByDay(friendlyHistory);
+    let html = '';
+    groups.forEach(grp => {
+      html += '<div class="hist-day"><div class="hist-day-title">' + escapeHtml(dayLabel(grp.date)) + '</div>';
+      grp.games.forEach(g => { html += friendlyItemHtml(g); });
+      html += '</div>';
+    });
+    box.innerHTML = html;
+
+    $$('.hist-del', box).forEach(btn => {
+      btn.addEventListener('click', () => {
+        friendlyHistory = friendlyHistory.filter(x => x.id !== btn.dataset.id);
+        persistFriendly();
+        renderHistoryList();
+      });
+    });
+  }
+
+  /* ----- tournament leaderboard history ----- */
+  function tournamentItemHtml(t){
+    const d = new Date(t.date);
+    const time = d.toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit' });
+
+    const entries = Object.entries(t.totals || {});
+    let best = -Infinity;
+    entries.forEach(([, v]) => { if (v > best) best = v; });
+    const winners = entries.filter(([, v]) => v === best).map(([k]) => k);
+
+    const winTxt = (winners.length > 1 ? 'Tie: ' : '🏆 ') + winners.join(' & ') + '  ' + signed(best);
+    const scores = t.players.map(p => '<span>' + escapeHtml(p) + ' ' + signed(t.totals[p] || 0) + '</span>').join('');
+
+    const meta = (t.playedGames || t.games.length) + ' of ' + t.totalGames + ' games · ' +
+                 t.players.length + ' players · min call ' + t.minCall +
+                 (t.totalRounds ? ' · ' + t.totalRounds + ' rds/game' : '');
+
+    return '<div class="hist-item tour">' +
+      '<div class="hist-top">' +
+        '<span class="hist-time">' + time + '</span>' +
+        '<span class="hist-win">' + escapeHtml(winTxt) + '</span>' +
+        '<button class="hist-del" data-id="' + t.id + '" title="Delete">×</button>' +
+      '</div>' +
+      '<div class="hist-name">' + escapeHtml(t.name) + '</div>' +
+      '<div class="hist-meta">' + meta + '</div>' +
+      '<div class="hist-scores">' + scores + '</div>' +
+      '<details class="hist-details"><summary>Game breakdown</summary>' +
+        tournamentBreakdownHtml(t.players, t.games, t.totals) +
+      '</details>' +
+    '</div>';
+  }
+
+  function renderTourList(){
+    const box = $('#tourList');
+    $('#tourCount').textContent = tournaments.length;
+    $('#tourActions').hidden = tournaments.length === 0;
+
+    if (tournaments.length === 0){
+      box.innerHTML = '<p class="muted small" style="margin:0">No tournaments yet. Finished tournaments appear here, grouped by date.</p>';
+      return;
+    }
+
+    const groups = groupByDay(tournaments);
+    let html = '';
+    groups.forEach(grp => {
+      html += '<div class="hist-day"><div class="hist-day-title">' + escapeHtml(dayLabel(grp.date)) + '</div>';
+      grp.games.forEach(t => { html += tournamentItemHtml(t); });
+      html += '</div>';
+    });
+    box.innerHTML = html;
+
+    $$('.hist-del', box).forEach(btn => {
+      btn.addEventListener('click', () => {
+        tournaments = tournaments.filter(x => x.id !== btn.dataset.id);
+        persistTournaments();
+        renderTourList();
+      });
+    });
+  }
+
+  /* ================= events ================= */
+  $$('.mode-btn').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+
+  $('#addPlayerBtn').addEventListener('click', addPlayer);
+  $('#newPlayer').addEventListener('keydown', e => { if (e.key === 'Enter') addPlayer(); });
+  $('#startBtn').addEventListener('click', startFriendly);
+  $('#startTournamentBtn').addEventListener('click', startTournament);
+  $('#saveRoundBtn').addEventListener('click', saveRound);
+  $('#endGameBtn').addEventListener('click', endGamePressed);
+
+  $('#clearHistoryBtn').addEventListener('click', () => {
+    if (friendlyHistory.length === 0) return;
+    if (!confirm('Delete all ' + friendlyHistory.length + ' friendly matches?')) return;
+    friendlyHistory = [];
+    persistFriendly();
+    renderHistoryList();
+    toast('Friendly history cleared');
+  });
+
+  $('#clearTourBtn').addEventListener('click', () => {
+    if (tournaments.length === 0) return;
+    if (!confirm('Delete all ' + tournaments.length + ' tournaments?')) return;
+    tournaments = [];
+    persistTournaments();
+    renderTourList();
+    toast('Tournament history cleared');
+  });
+
+  /* ================= boot ================= */
+  loadAll();
+  renderPlayers();
+  setMode('friendly');
+  updateMinCall();
+  updateStartButtons();
+  renderHistoryList();
+  renderTourList();
+})();
+</script>
+</body>
+</html>
